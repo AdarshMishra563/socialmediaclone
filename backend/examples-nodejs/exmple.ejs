@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>profile page</title>
+</head>
+<body>
+    <h1>Profile: <%=  user.name %></h1>
+    <h1>Profile: <%=  user.email %></h1>
+<ul>
+    <% user.skills.forEach((e)=>{%>
+        <li><%= e %></li>
+    <%}) %>
+</ul>
+</body>
+</html>
+app.get('/profile',(_,resp)=>{
+
+    const user={
+        name:"akkk",
+        email:"am@gmail.com",
+        skills:["kk","hhhh","gaga","hhhhaaa"]
+        
+    }
+    resp.render('profile',{user});
+})

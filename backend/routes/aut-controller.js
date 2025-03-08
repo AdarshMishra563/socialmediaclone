@@ -94,14 +94,14 @@ const registerUser = async (req, res) => {
 const loginUser=async (req ,res)=>{
     try{
         const {email,password}=req.body ;
-        const user= await User.findOne({email});
+        const user= await User.findOne({email,password});
         if(!user){
             return res.status(400).json({status:"false",
                 message:"user doesn,t exist"
             })
         }
-        console.log(user)
-        
+        console.log(user);
+        const isMatch=password;
         if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
     
         const token = jwt.sign({ id: user._id }, "b81e9ab305130c87118bc792fdbbf1a73b732c659ff2b7742f7bd41aca1315a2", { expiresIn: "1h" });

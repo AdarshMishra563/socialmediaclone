@@ -97,7 +97,7 @@ const loginUser=async (req ,res)=>{
         const user= await User.findOne({email,password});
         if(!user){
             return res.status(400).json({status:"false",
-                message:"user doesn,t exist"
+                message:"user doesn,t exist or invalid credintials"
             })
         }
         console.log(user);

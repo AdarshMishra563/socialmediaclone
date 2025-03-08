@@ -1,40 +1,95 @@
 const User =require('./user');
 
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto"); 
 
+const cloudinary = require("cloudinary").v2;
+// Ensure correct path to User model
+const multer = require("multer");
+const { promisify } = require("util");
 
+cloudinary.config({
+  cloud_name:"de0v39ltg",
+  api_key:"389592325465775",
+  api_secret:"s-eZ4GsC5W2TRvPC12XvAtQSAt0",
+});
 
-const registerUser=async (req ,res)=>{
-    try{
-        console.log(req.body)
-        const {name,email,password,number,address}=req.body;
-        const hashedPassword = password;
-        const checkexistinguser= await User.findOne({$or:[{email}]})
-        if(checkexistinguser){
-            return res.status(400).json({
-                success:false,
-                message:"User already exists"
-            })
-        }
-        const newlycreateduser =await  User.insertMany({name,email,password:hashedPassword,number,address})
-        
-        if(newlycreateduser){
-            res.status(201).json({
-                success:true,
-                message:"registered succefully"
-            })
-        }else{
-            console.log("couldn't register")
-        }
+const generateSignature = () => {
+  const timestamp = Math.round(new Date().getTime() / 1000);
+  const signature = crypto
+    .createHash("sha1")
+    .update(`timestamp=${timestamp}${cloudinary.config().api_secret}`)
+    .digest("hex");
 
-    }catch(e){
-        console.log(e);
-        res.status(500).json({
-            success:false,
-            message:'Some error'
-        })
+  return { timestamp, signature };
+};
+
+const uploadToCloudinary = promisify(cloudinary.uploader.upload);
+const registerUser = async (req, res) => {
+    try {
+      console.log("✅ Incoming Request Body:", req.body);
+      
+      const { name, email, password, number, image } = req.body;
+  
+      if (!name || !email || !password || !number || !image) {
+        return res.status(400).json({
+          success: false,
+          message: "All fields are required",
+        });
+      }
+  
+      // Check if user already exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: "User already exists",
+        });
+      }
+  
+      // ✅ Securely hash the password
+      const hashedPassword = password;
+  
+      // ✅ Upload base64 image to Cloudinary
+      
+    // Generate a secure Cloudinary signature
+    const { timestamp, signature } = generateSignature();
+
+    // Upload image to Cloudinary using secure signed request
+    const uploadResponse = await cloudinary.uploader.upload(image, {
+        folder: "user_profiles",
+      });
+
+    if (!uploadResponse.secure_url) {
+      return res.status(500).json({
+        success: false,
+        message: "Image upload failed",
+      });
     }
-}
+
+      // ✅ Create new user
+      const newUser = await User.create({
+        name,
+        email,
+        password: hashedPassword,
+        number,
+        image: uploadResponse.secure_url, // ✅ Store Cloudinary URL
+      });
+  
+      console.log("✅ User Created:", newUser);
+  
+      res.status(201).json({
+        success: true,
+        message: "Registered successfully",
+      });
+    } catch (error) {
+      console.error("❌ Registration Error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Some error occurred",
+      });
+    }
+  };
 const loginUser=async (req ,res)=>{
     try{
         const {email,password}=req.body ;

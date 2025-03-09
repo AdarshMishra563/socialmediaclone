@@ -191,4 +191,100 @@ const start=async (req, res) => {
 }
 
 
-module.exports={loginUser,registerUser,password,get,usercount,start}
+
+const addPost = async (req, res) => {
+    try {
+      const { email } = req.body; // Get user email from request
+      const { image, caption } = req.body; // Post image (base64 or URL) and caption
+  
+      if (!image) {
+        return res.status(400).json({ success: false, message: "Post image is required" });
+      }
+  
+      // Upload image to Cloudinary
+      const uploadResponse = await cloudinary.uploader.upload(image, {
+        folder: "user_posts",
+      });
+  
+      if (!uploadResponse.secure_url) {
+        return res.status(500).json({ success: false, message: "Image upload failed" });
+      }
+  
+      // Find the user and update their posts array
+      const updatedUser = await User.findOneAndUpdate(
+        { email },
+        {
+          $push: {
+            posts: {
+              image: uploadResponse.secure_url,
+              caption: caption || "", // Caption is optional
+              likes: 0,
+              comments: [],
+              createdAt: new Date(),
+            },
+          },
+        },
+        { new: true, runValidators: true }
+      );
+  
+      if (!updatedUser) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+  
+      res.status(200).json({
+        success: true,
+        message: "Post added successfully",
+        user: updatedUser,
+      });
+    } catch (error) {
+      console.error("❌ Error adding post:", error);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  };
+
+  const like= async (req, res) => {
+    const { id, email } = req.body;
+  const _id=id;
+    if (!_id || !email) {
+      return res.status(400).json({ success: false, message: "Post ID and User Email are required!" });
+    }
+  
+    try {
+      const user = await User.findOne({"posts._id": _id});
+      
+  
+      const post = user.posts.find((p) => p._id.toString() === _id);
+
+      if (!post) {
+        return res.status(404).json({ success: false, message: "Post not found!" });
+      }
+      console.log(post)
+      // 🔹 Ensure likedBy is initialized as an array
+      if (!post.likedby) {
+        post.likedby = [];
+      }
+      const isLiked = post.likedby.includes(email);
+  
+      if (isLiked) {
+        // Unlike the post
+        post.likes -= 1;
+        post.likedby = post.likedby.filter(email => email !== email);
+      } else {
+        // Like the post
+        post.likes += 1;
+        post.likedby.push(email);
+      }
+  
+      await user.markModified("posts"); // Mark the posts array as modified
+      await user.save(); // Now save the user
+      
+      res.json({ success: true, message: isLiked ? "Post unliked!" : "Post liked!", likes: post.likes });
+  
+    } catch (error) {
+      console.error("❌ Error:", error);
+      res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+  };
+  
+
+module.exports={loginUser,registerUser,password,get,usercount,start,addPost,like}

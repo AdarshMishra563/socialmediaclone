@@ -1,4 +1,12 @@
 const mongoose=require('mongoose');
+const PostSchema = new mongoose.Schema({
+    image: { type: String, required: true },
+    caption:String, // Image URL (instead of text)
+    likes: { type: Number, default: 0 }, 
+    comments: [{ type: String }],
+    likedby:[],
+    createdAt: String // Array of comments
+  })
 const ProductSch=new mongoose.Schema({name:{
     type:String,
     required:true,
@@ -18,10 +26,11 @@ number:{
     unique:true,
     required:true
 },
-address:{
+image:{
     type:String,
     required:true
-}
+},
+posts: { type: [PostSchema], default: [] }
 
 });
     module.exports = mongoose.model('iosUser',ProductSch);

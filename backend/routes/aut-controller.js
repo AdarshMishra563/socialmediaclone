@@ -286,5 +286,47 @@ const addPost = async (req, res) => {
     }
   };
   
+  const comment=async (req, res) => {
+    try {console.log(req.body)
+      const { name, comment, id } = req.body;
+  
+      if (!name || !comment || !id) {
+        return res.status(400).json({ error: "Name, comment, and post ID are required" });
+      }
+  
+      
+      const user = await User.findOne({ "posts._id": id });
+  
+      if (!user) {
+        return res.status(404).json({ error: "Post not found" });
+      }
+  
+  
+      
+      const post = user.posts.find((p) => p._id.toString() === id)
+      if (!post) {
+        return res.status(404).json({ error: "Post not found" });
+      }
+      if (!post.comments) {
+        post.comments = [];
+      }
+  
+      
+      post.comments.push({
+        username: name,
+        text: comment,
+        createdAt: new Date(),
+      });
+      await user.markModified("posts")
+      // Save the updated user document
+      await user.save();
+  
+      res.json({ success: true, updatedPost: post,user:user,post:post });
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  };
+  
 
-module.exports={loginUser,registerUser,password,get,usercount,start,addPost,like}
+module.exports={loginUser,registerUser,password,get,usercount,start,addPost,like,comment}

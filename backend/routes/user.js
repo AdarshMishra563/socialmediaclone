@@ -9,7 +9,8 @@ const CommentSchema = new mongoose.Schema({
 
 // Post Schema
 const PostSchema = new mongoose.Schema({
-  image: { type: String, required: true }, // Image URL
+    type:{type:String,required:true},
+  url: { type: String, required: true }, // Image URL
   caption: String, // Caption for the post
   likes: { type: Number, default: 0 }, // Total likes count
   comments: { type: [CommentSchema], default: [] }, // Array of comments
@@ -46,4 +47,4 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Export the model
-module.exports = mongoose.model("iosUser", UserSchema);
+module.exports = mongoose.model("testingvideo", UserSchema);

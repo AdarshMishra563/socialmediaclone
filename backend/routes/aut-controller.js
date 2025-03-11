@@ -191,56 +191,48 @@ const start=async (req, res) => {
 }
 
 
-
 const addPost = async (req, res) => {
-    try {
-      const { email } = req.body; // Get user email from request
-      const { image, caption } = req.body; // Post image (base64 or URL) and caption
-  
-      if (!image) {
-        return res.status(400).json({ success: false, message: "Post image is required" });
-      }
-  
-      // Upload image to Cloudinary
-      const uploadResponse = await cloudinary.uploader.upload(image, {
-        folder: "user_posts",
-      });
-  
-      if (!uploadResponse.secure_url) {
-        return res.status(500).json({ success: false, message: "Image upload failed" });
-      }
-  
-      // Find the user and update their posts array
-      const updatedUser = await User.findOneAndUpdate(
-        { email },
-        {
-          $push: {
-            posts: {
-              image: uploadResponse.secure_url,
-              caption: caption || "", // Caption is optional
-              likes: 0,
-              comments: [],
-              createdAt: new Date(),
-            },
+  try {
+    console.log("📥 Received Data:", req.body);  // Log incoming request
+
+    const { email, type, url, caption } = req.body;
+
+    if (!url || !type) {
+      return res.status(400).json({ success: false, message: "Post URL and type are required" });
+    }
+
+    const updatedUser = await User.findOneAndUpdate(
+      { email },
+      {
+        $push: {
+          posts: {
+            type,
+            url,
+            caption: caption || "",
+            likes: 0,
+            comments: [],
+            createdAt: new Date(),
           },
         },
-        { new: true, runValidators: true }
-      );
-  
-      if (!updatedUser) {
-        return res.status(404).json({ success: false, message: "User not found" });
-      }
-  
-      res.status(200).json({
-        success: true,
-        message: "Post added successfully",
-        user: updatedUser,
-      });
-    } catch (error) {
-      console.error("❌ Error adding post:", error);
-      res.status(500).json({ success: false, message: "Server error" });
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
     }
-  };
+
+    console.log("✅ User Updated:", updatedUser);
+    res.status(200).json({
+      success: true,
+      message: `${type.charAt(0).toUpperCase() + type.slice(1)} post added successfully`,
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("❌ Backend Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 
   const like= async (req, res) => {
     const { id, email } = req.body;

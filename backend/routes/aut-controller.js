@@ -53,19 +53,9 @@ const registerUser = async (req, res) => {
       // ✅ Upload base64 image to Cloudinary
       
     // Generate a secure Cloudinary signature
-    const { timestamp, signature } = generateSignature();
+  
 
-    // Upload image to Cloudinary using secure signed request
-    const uploadResponse = await cloudinary.uploader.upload(image, {
-        folder: "user_profiles",
-      });
-
-    if (!uploadResponse.secure_url) {
-      return res.status(500).json({
-        success: false,
-        message: "Image upload failed",
-      });
-    }
+  
 
       // ✅ Create new user
       const newUser = await User.create({
@@ -73,13 +63,12 @@ const registerUser = async (req, res) => {
         email,
         password: hashedPassword,
         number,
-        image: uploadResponse.secure_url, // ✅ Store Cloudinary URL
+        image // ✅ Store Cloudinary URL
       });
   
       console.log("✅ User Created:", newUser);
   
       res.status(201).json({
-        data:[newUser],
         success: true,
         message: "Registered successfully",
       });

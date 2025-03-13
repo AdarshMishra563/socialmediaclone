@@ -1,6 +1,9 @@
-import React, { useState,useRef, useEffect } from "react";
-import { View, Text,ScrollView,Button,KeyboardAvoidingView,Modal,StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, FlatList, ImageBackground, Animated, Dimensions } from "react-native";
+import React, { useState,useRef, useEffect, useCallback } from "react";
+import { View, Text,ScrollView,RefreshControl,Button,KeyboardAvoidingView,Modal,StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, FlatList, ImageBackground, Animated, Dimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent, } from "react-native";
 import axios from "axios";
+import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { Image } from "react-native";
@@ -46,10 +49,12 @@ const FallingLeaves = () => {
     />
   ));
 };
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const CLOUDINARY_UPLOAD_PRESET = "datafiles"; 
 const CLOUDINARY_CLOUD_NAME = "de0v39ltg";
 const FormScreen = () => {
+
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -286,8 +291,13 @@ const LoginScreen = () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      console.log("✅ Login Success:", response.data);
+      console.log(" Login Success:", response.data);
       Alert.alert("Success", "Logged in successfully!");
+      const userData = response.data.user;
+
+      
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
+
       navigation.navigate("UserScreen", { userData: response.data.user }); // Navigate to the next screen
     } catch (error) {
       console.error(" Login Error:", error);
@@ -381,12 +391,14 @@ const LoginScreen = () => {
   );
 };
 import { useRoute } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const api=async()=>{
 const users= await axios.get("https://apkform-2.onrender.com");
 return users.data;
 
 }
+const screenHeight = Dimensions.get("window").height;
 
 const UserScreen =  () => {
   const [clicked,setclicked]=useState(false)
@@ -403,6 +415,16 @@ const [posts,setposts]=useState([])
   useEffect(() => {
     api().then((e) => setUsers(e.data));
   }, []);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    api().then((e) => setUsers(e.data));
+    
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  };
 
   const toggleInfo = () => {
     Animated.timing(slideAnim, {
@@ -463,16 +485,11 @@ const [posts,setposts]=useState([])
 
 
    }
-   const [videoStates, setVideoStates] = useState({});
    const videoRefs = useRef({});
+   const [videoStates, setVideoStates] = useState({isMuted:false});
+   const videoPositions = useRef({});
  
-   useEffect(() => {
-     
-     setVideoStates({});
-     videoRefs.current = {};
-   }, [posts]);
- 
-   
+   // Toggle Play/Pause (Manual Play Control)
    const togglePlay = (child) => {
      const videoRef = videoRefs.current[child._id];
      if (!videoRef) return;
@@ -484,13 +501,99 @@ const [posts,setposts]=useState([])
        } else {
          videoRef.pauseAsync();
        }
-       return { ...prev, [child._id]: isPlaying };
+       return { ...prev, [child._id]: isPlaying,isMuted:!isMuted };
      });
    };
  
+   
+   const [currentVideo, setCurrentVideo] = useState(null);
+   
+  
+  const onVideoLayout = (event, id) => {
+    const { y, height } = event.nativeEvent.layout;
+    videoPositions.current[id] = { top: y, bottom: y + height };
+  };
+
+
+  const checkVideoVisibility = (event) => {
+    const scrollY = event.nativeEvent.contentOffset.y;
+    const viewportBottom = scrollY + screenHeight;
+
+    let newCurrentVideo = null;
+
+    Object.keys(videoPositions.current).forEach((id) => {
+      const { top, bottom } = videoPositions.current[id];
+
+      const fullyVisible = top >= scrollY && bottom <= viewportBottom;
+
+      if (fullyVisible && !newCurrentVideo) {
+        newCurrentVideo = id;
+      }
+    });
+
+    if (newCurrentVideo !== currentVideo) {
+      setCurrentVideo(newCurrentVideo);
+    }
+  };
+
+  useEffect(() => {
+    Object.keys(videoRefs.current).forEach((id) => {
+      if (id === currentVideo) {
+        videoRefs.current[id]?.playAsync();
+      } else {
+        videoRefs.current[id]?.pauseAsync();
+      }
+    });
+  }, [currentVideo]);
+
+   useEffect(() => { 
+     Object.keys(videoRefs.current).forEach((id) => {
+       if (id === currentVideo) {
+         videoRefs.current[id]?.playAsync();
+       } else {
+         videoRefs.current[id]?.pauseAsync();
+       }
+     });
+   }, [currentVideo]);
+   const logout = async () => {
+    await AsyncStorage.removeItem("user");
+    navigation.replace("LoginScreen");
+  };
+   const [mute,setmute]=useState(false)
+   const videoRef = useRef(null);
+   const [isMuted, setIsMuted] = useState(false);
+
+   const toggleMute = async (childId) => {
+    const videoRef = videoRefs.current[childId];
+    if (!videoRef) return;
+  
+    const status = await videoRef.getStatusAsync();
+    await videoRef.setStatusAsync({ isMuted: !status.isMuted });
+ 
+    
+    setVideoStates((prev) => ({
+      ...prev,
+      [childId]: { ...prev[childId], isMuted: status.isMuted },
+    }));
+   
+   console.log(videoStates,"sates")
+  };
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        Object.values(videoRefs.current).forEach((video) => {
+          if (video) {
+            video.pauseAsync();
+          }
+        });
+      };
+    }, [])
+  );
+
+ 
 const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
   return (
-    <View style={{ flex: 1, backgroundColor: "black", paddingTop: 10 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "black", paddingTop: 10 }}>
      
       <View
         style={{
@@ -583,6 +686,7 @@ const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
       <View
   style={{
     flexDirection: "row", 
+    marginBottom:2,
     justifyContent: "space-between", 
     paddingHorizontal: 20, 
     marginTop: 10
@@ -592,8 +696,10 @@ const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
   <TouchableOpacity
     onPress={postscreen}
     style={{
+      boxShadow: "1px 1px 2px rgba(242, 12, 31, 0.92)",
+      
       backgroundColor: "rgb(57, 54, 53)",
-      width: 80,
+      width: 60,
       borderRadius: 20,
       justifyContent: "center",
       paddingVertical: 6,
@@ -605,11 +711,12 @@ const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
       shadowRadius: 5,
     }}
   >
-    <Text style={{ color: "white", fontSize: 18 ,marginBottom:2}}>Post </Text>
+    <Text style={{ color: "white", fontSize: 14 ,marginBottom:2}}>Post </Text>
   </TouchableOpacity>
   <TouchableOpacity style={{
       backgroundColor: "rgb(57, 54, 53)",
-      width: 80,
+      boxShadow: "1px 1px 2px rgba(249, 18, 64, 0.92)",
+      width: 78,
       borderRadius: 20,
       justifyContent: "center",
       paddingVertical: 6,
@@ -619,18 +726,18 @@ const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
       shadowColor: "#000",
       shadowOpacity: 0.2,
       shadowRadius: 5,
-    }} onPress={()=>{navigation.navigate("Reels",{user})}}><Text style={{ color: "white", fontSize: 18 ,marginBottom:2}}>Videos</Text></TouchableOpacity>
+    }} onPress={()=>{navigation.navigate("Reels",{user})}}><Text style={{ color: "white", fontSize: 14 ,marginBottom:2,width:"auto"}}>Clips</Text></TouchableOpacity>
 
   
   <TouchableOpacity
     onPress={toggleUsers}
-    style={{
+    style={{  boxShadow: "1px 1px 2px rgba(214, 7, 38, 0.92)",
       backgroundColor: "rgb(57, 54, 53)",
-      width: 80,
+      width: 70,
       borderRadius: 20,
       justifyContent: "center",
       paddingVertical: 6,
-      paddingHorizontal: 15,
+      paddingHorizontal: 10,
       alignItems: "center",
       elevation: 5,
       shadowColor: "#000",
@@ -638,7 +745,25 @@ const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
       shadowRadius: 5,
     }}
   >
-    <Text style={{ color: "white", fontSize: 18 }}>Users ▼</Text>
+    <Text style={{ color: "white", fontSize: 14 }}>Users ▼</Text>
+  </TouchableOpacity>
+  <TouchableOpacity
+    onPress={logout}
+    style={{  boxShadow: "1px 1px 2px rgba(214, 7, 38, 0.92)",
+      backgroundColor: "rgb(57, 54, 53)",
+      width: 70,
+      borderRadius: 20,
+      justifyContent: "center",
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      alignItems: "center",
+      elevation: 5,
+      shadowColor: "#000",
+      shadowOpacity: 0.2,
+      shadowRadius: 5,
+    }}
+  >
+    <Text style={{ color: "white", fontSize: 14 }}>Logout</Text>
   </TouchableOpacity>
 </View>
 
@@ -707,12 +832,15 @@ const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
         </Animated.View>
       )}
 
-      <ScrollView><View style={{ alignItems: "center", justifyContent: "center", marginTop: 4, width: "100%" }}>
+      <ScrollView refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+ onScroll={checkVideoVisibility}    
+      scrollEventThrottle={16}><View style={{ alignItems: "center", justifyContent: "center", marginTop: 4, width: "100%" }}>
       {posts.map((data) => (
-        <View key={data.name} style={{ alignItems: "center", justifyContent: "center", width: "100%" }}>
+        <View key={data._id} style={{ alignItems: "center", justifyContent: "center", width: "100%" }}>
           {data.posts.map((child) => {
             return (
-              <View
+              <View 
                 key={child._id}
                 style={{
                   borderWidth: 2,
@@ -724,6 +852,7 @@ const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
                   marginBottom: 8,
                   alignItems: "center",
                 }}
+                onLayout={(e) => onVideoLayout(e, child._id)}
               >
                
                 {child.type === "image" && (
@@ -741,21 +870,26 @@ const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
 
                 
                 {child.type === "video" && (
-                  <View style={{ width: "100%", height: 300, position: "relative" }}>
+                  <View key={child._id} style={{ width: "100%", height: 300, position: "relative" }}>
                     <Video
                       ref={(ref) => (videoRefs.current[child._id] = ref)}
                       source={{ uri: child.url }}
                       rate={1.0}
                       volume={1.0} 
-                      isMuted={false}
+                      
+                      isMuted={!isMuted}
+                      
                       resizeMode="cover"
-                      shouldPlay={videoStates[child._id] || false}
+                      shouldPlay={false} 
                       isLooping
                       style={{
                         width: "100%",
                         height: "100%",
                         borderRadius: 8,
+                        
                       }}
+                     
+
                     />
                     
                     <TouchableOpacity
@@ -772,6 +906,20 @@ const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
                     >
                       <Ionicons name={videoStates[child._id] ? "pause" : "play"} size={30} color="white" />
                     </TouchableOpacity>
+                    <TouchableOpacity
+                      style={{
+                        position: "absolute",
+                        bottom: 10,
+                        right: 10,
+                        backgroundColor: "rgba(0, 0, 0, 0.5)",
+                        borderRadius: 50,
+                        padding: 10,
+                      }}
+                      onPress={() => toggleMute(child._id)}
+                    >
+                      <Ionicons name={videoStates[child._id]?.isMuted || false? "volume-high" : "volume-mute" } size={16} color="white" />
+                    </TouchableOpacity>
+
                   </View>
                 )}
 
@@ -818,7 +966,7 @@ const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
         </View>
       ))}
     </View></ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 const Comments = ({ child, user, onPress }) => {
@@ -885,7 +1033,7 @@ const Comments = ({ child, user, onPress }) => {
               minHeight: 300,
             }}
           >
-            {/* Close Button */}
+            
             <TouchableOpacity
               onPress={() => setModalVisible(false)}
               style={{ position: "absolute", right: 16, top: 10,zIndex:9999 }}
@@ -905,7 +1053,7 @@ const Comments = ({ child, user, onPress }) => {
               Comments
             </Text>
 
-            {/* Comment List */}
+            
             <FlatList
               data={comments}
               keyExtractor={(item, index) => index.toString()}
@@ -927,7 +1075,7 @@ const Comments = ({ child, user, onPress }) => {
               style={{ maxHeight: 200 }}
             />
 
-            {/* Comment Input */}
+            
             <View
               style={{
                 flexDirection: "row",
@@ -971,7 +1119,7 @@ const Like = ({ email, child ,onPress}) => {
     } else {
       setTt(false);
     }
-  }, [child.likedby, email]); // Run only when `likedby` or `email` changes
+  }, [child.likedby, email]); 
 
   const countit = () => {
     setcount((prev) => (tt ? prev - 1 : prev + 1));
@@ -1104,7 +1252,7 @@ const req= {
 };
 
   return (
-    <View style={{ padding: 20 }}>
+    <View style={{ padding: 20 ,marginTop:"6%"}}>
       <Button title="Pick Image/Video" onPress={pickMedia} />
       {media && type === "image" && <Image source={{ uri: media }} style={{ width: 200, height: 200 }} />}
       {media && type === "video" && <Video source={{ uri: media }} style={{ width: 200, height: 200 }} shouldPlay />}
@@ -1194,7 +1342,7 @@ console.log(user)
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "black", padding: 10 },
+  container: { flex: 1, backgroundColor: "black", padding: 10, },
   backButton: { marginBottom: 10, padding: 5 },
   backText: { color: "white", fontSize: 18 },
   profileHeader: { alignItems: "center", marginBottom: 20 },
@@ -1213,16 +1361,45 @@ const styles = StyleSheet.create({
 
 const Stack = createStackNavigator();
 export default function AppNavigator() {
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkUserLogin = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem("user");
+        console.log("Stored User:", storedUser);
+        if (storedUser) {
+          setUserData(JSON.parse(storedUser));
+        }
+      } catch (error) {
+        console.error("Error retrieving user:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkUserLogin();
+  }, []);
+
+  if (loading) return null; 
+
   return (
-   
-      <Stack.Navigator>
-        <Stack.Screen name="FormScreen" component={FormScreen} />
-        <Stack.Screen name="LoginScreen" component={LoginScreen} />
-        <Stack.Screen name="UserScreen" component={UserScreen} />
-        <Stack.Screen name="PostScreen" component={PostScreen} />
-        <Stack.Screen name="Profile" component={ProfileScreen} />
-        <Stack.Screen name="Reels" component={VideoReelsScreen}/>
-      </Stack.Navigator>
-  
+    <Stack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName={userData ? "UserScreen" : "LoginScreen"}
+    >
+      <Stack.Screen name="LoginScreen" component={LoginScreen} />
+      <Stack.Screen name="FormScreen" component={FormScreen} />
+      <Stack.Screen
+        name="UserScreen"
+        component={UserScreen}
+        initialParams={{ userData }}
+      />
+      
+      <Stack.Screen name="PostScreen" component={PostScreen} />
+      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="Reels" component={VideoReelsScreen} />
+    </Stack.Navigator>
   );
 }

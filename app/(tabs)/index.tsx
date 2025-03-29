@@ -3,6 +3,8 @@ import { View, Text,ScrollView,RefreshControl,Button,KeyboardAvoidingView,Modal,
   NativeSyntheticEvent,
   NativeScrollEvent, } from "react-native";
 import axios from "axios";
+
+
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -15,7 +17,7 @@ import * as ImagePicker from "expo-image-picker";
  import { Ionicons } from "@expo/vector-icons";
 const { width, height } = Dimensions.get("window");
 import * as FileSystem from "expo-file-system";
-import VideoReelsScreen from "./reels";
+
 const FallingLeaves = () => {
   const [leaves] = useState(
     Array.from({ length: 10 }).map(() => new Animated.Value(0))
@@ -38,7 +40,7 @@ const FallingLeaves = () => {
       key={index}
       style={{
         position: "absolute",
-        transform: [{ translateY: leaf }], // ✅ Works with native driver
+        transform: [{ translateY: leaf }], 
 
         left: Math.random() * 300,
         width: 20,
@@ -51,7 +53,7 @@ const FallingLeaves = () => {
 };
 import AsyncStorage from "@react-native-async-storage/async-storage";
 const CLOUDINARY_UPLOAD_PRESET = "datafiles"; 
-const CLOUDINARY_CLOUD_NAME = "de0v39ltg";
+const CLOUDINARY_CLOUD_NAME = "da7i5kopw";
 const FormScreen = () => {
 
 
@@ -60,7 +62,7 @@ const FormScreen = () => {
     email: "",
     number: "",
     password: "",
-    image: null, // Cloudinary Image URL
+    image: null, 
   });
 
   const [loading, setLoading] = useState(false);
@@ -100,7 +102,7 @@ const FormScreen = () => {
 
     const selectedImage = result.assets[0].uri;
     setLoading(true);
-    console.log("Selected Image URI:", selectedImage);
+    
 
     const cloudinaryUrl = await uploadToCloudinary(selectedImage);
     if (!cloudinaryUrl) {
@@ -114,7 +116,7 @@ const FormScreen = () => {
       image: cloudinaryUrl, 
     }));
 
-    console.log("Cloudinary Image URL Set:", cloudinaryUrl);
+    
     setLoading(false);
   };
 
@@ -147,7 +149,7 @@ const FormScreen = () => {
 
 
   const handleSubmit = async () => {
-    console.log("Form Data before submission:", formData);
+    
 
     if (
       !formData.name ||
@@ -171,7 +173,7 @@ const FormScreen = () => {
         image: formData.image,
       };
 
-      console.log(" Request Body:", requestBody);
+      
 
       const response = await axios.post(
         "https://apkform-2.onrender.com/api/auth/register",
@@ -181,7 +183,7 @@ const FormScreen = () => {
         }
       );
 
-      console.log(" API Response:", response.data);
+      
       navigation.navigate("LoginScreen");
     } catch (error) {
       console.error(" Axios Error:", error);
@@ -291,7 +293,7 @@ const LoginScreen = () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      console.log(" Login Success:", response.data);
+      
       Alert.alert("Success", "Logged in successfully!");
       const userData = response.data.user;
 
@@ -392,6 +394,7 @@ const LoginScreen = () => {
 };
 import { useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Colors } from "@/constants/Colors";
 
 const api=async()=>{
 const users= await axios.get("https://apkform-2.onrender.com");
@@ -454,7 +457,7 @@ const [posts,setposts]=useState([])
       });
   
     setposts(sortedUsers);
-    console.log("Sorted Posts:", sortedUsers);
+    
   }, [users]);
 
 
@@ -475,7 +478,7 @@ const [posts,setposts]=useState([])
         email: email,
         id: id,
       });
-      console.log(email,id);
+      
       console.log(response)
       
       
@@ -726,7 +729,7 @@ const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
       shadowColor: "#000",
       shadowOpacity: 0.2,
       shadowRadius: 5,
-    }} onPress={()=>{navigation.navigate("Reels",{user})}}><Text style={{ color: "white", fontSize: 14 ,marginBottom:2,width:"auto"}}>Clips</Text></TouchableOpacity>
+    }} onPress={()=>{navigation.navigate("Reels",{user,users})}}><Text style={{ color: "white", fontSize: 14 ,marginBottom:2,width:"auto"}}>Clips</Text></TouchableOpacity>
 
   
   <TouchableOpacity
@@ -947,6 +950,7 @@ const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
                   <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 4 }}>
                     
                     <Like
+                    type={false}
                       onPress={() => {
                         like(user.email, child._id);
                       }}
@@ -956,7 +960,7 @@ const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
 
                     
                     <View>
-                      <Comments child={child} user={user} onPress={() => api().then((data) => setUsers(data.data))} />
+                      <Comments child={child} type={false} user={user} onPress={() => api().then((data) => setUsers(data.data))} />
                     </View>
                   </View>
                 </View>
@@ -969,7 +973,7 @@ const postscreen=()=>{navigation.navigate("PostScreen", { email: user.email });}
     </SafeAreaView>
   );
 };
-const Comments = ({ child, user, onPress }) => {
+const Comments = ({ child, user, onPress,type }) => {
   const [input, setInput] = useState("");
   const [isModalVisible, setModalVisible] = useState(false);
   const [comments, setComments] = useState(
@@ -987,28 +991,28 @@ const Comments = ({ child, user, onPress }) => {
 
     try {
       const response = await axios.post("https://apkform-2.onrender.com/api/auth/comment", data);
-      console.log(response.data);
+      
 
       setComments([...comments, { username: user.name, text: input }]); // Update UI
-      setInput(""); // Clear input
-      onPress(); // Refresh parent if needed
+      setInput("");
+      onPress(); 
     } catch (error) {
       console.error(error);
     }
   };
 
   return (
-    <View style={{ position: "relative", alignItems: "flex-end", marginRight: 10 }}>
-      {/* Comment Icon & Count */}
+    <View style={{ position: "relative", alignItems: "flex-end", marginRight: 2,marginTop:2 }}>
+    
       <TouchableOpacity
         onPress={() => setModalVisible(true)}
-        style={{ flexDirection: "row", alignItems: "center" }}
+        style={{ flexDirection: type==true ? "column":"row", alignItems: "center" }}
       >
-        <Icon name="chatbubble-outline" size={24} color="#fff" />
-        <Text style={{ color: "white", fontSize: 18, marginLeft: 4 }}>{child.comments.length}</Text>
+        <Icon name="chatbubble-outline" size={22} color="#fff" />
+        <Text style={{ color: "white", fontSize: 17, marginLeft: 3,padding:2 }}>{child.comments.length}</Text>
       </TouchableOpacity>
 
-      {/* Modal Popup for Comments */}
+      
       <Modal
       
         animationType="slide"
@@ -1109,7 +1113,7 @@ const Comments = ({ child, user, onPress }) => {
     </View>
   );
 };
-const Like = ({ email, child ,onPress}) => {
+const Like = ({ email, child ,onPress,type}) => {
   const [tt, setTt] = useState(false);
   const [count,setcount]=useState(child.likes)
   console.log(child._id)
@@ -1128,23 +1132,23 @@ const Like = ({ email, child ,onPress}) => {
   return (
     
 <TouchableOpacity
-  style={{ marginRight: 16, marginTop: 3 }}
+  style={{ marginRight: 3,marginLeft:2, marginTop: 3,flexDirection:type==true?"column":"row" }}
   onPress={() => {
     onPress();
     setTt(!tt);
     countit();
   }}
 >
-  <View style={{ position: "relative", width: 40, height: 24, flexDirection: "row", alignItems: "center" }}>
-    {/* Outlined Heart */}
+  <View style={{ position: "relative", width: 24, height: 24, alignItems: "center" }}>
+    
     <Icon name="heart-outline" size={24} color="#fff" style={{ position: "absolute" }} />
 
-    {/* Filled Heart (Shown when liked) */}
+   
     {tt && <Icon name="heart" size={24} color="#ff0000" style={{ position: "absolute" }} />}
 
-    {/* Likes Count */}
-    <Text style={{ color: "white", marginLeft: 30, fontSize: 18, paddingBottom: 4 }}>{count}</Text>
-  </View>
+ 
+   
+  </View> <View style={{position: "relative", width: 24, height: 24, alignItems: "center" }}><Text style={{ color: "white", fontSize: 18 }}>{count}</Text></View>
 </TouchableOpacity>
   );
 };
@@ -1179,7 +1183,7 @@ const pickMedia = async () => {
   if (!result.canceled && result.assets && result.assets.length > 0) {
     setMedia(result.assets[0].uri);
     setType(result.assets[0].type.startsWith("video") ? "video" : "image");
-    console.log("Selected file:", result.assets[0]);
+    
   }
 };
 
@@ -1200,7 +1204,7 @@ const uploadToCloudinary = async () => {
   formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
   try {
-    console.log("Uploading file:", { uri: media, type });
+    
 
     let response = await fetch(
       `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${type === "video" ? "video" : "image"}/upload`,
@@ -1211,10 +1215,10 @@ const uploadToCloudinary = async () => {
     );
 
     let data = await response.json();
-    console.log("Cloudinary Response:", data);
+    
 
     if (data.secure_url) {
-      console.log("Uploaded to Cloudinary:", data.secure_url);
+      
       await sendToBackend(data.secure_url);
     } else {
       Alert.alert("Upload Failed", "Could not upload to Cloudinary.");
@@ -1229,13 +1233,7 @@ const uploadToCloudinary = async () => {
 console.log("typwww,",type,userEmail)
 const sendToBackend = async (fileUrl) => {
   try {
-    console.log("Sending Data:", {
-      email: userEmail, 
-      url: fileUrl,
-      type: type,
-      caption: caption
-    });
-const req= {
+    const req= {
   email: userEmail, 
   url: fileUrl,
   type: type,
@@ -1243,7 +1241,7 @@ const req= {
 }
     const response = await axios.post("https://apkform-2.onrender.com/api/auth/addpost",req);
 
-    console.log("Backend Response:", response.data);
+    
     Alert.alert("Success", "Post uploaded successfully!");
   } catch (error) {
     console.error("Backend API error:", error.response ? error.response.data : error.message);
@@ -1342,7 +1340,7 @@ console.log(user)
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "black", padding: 10, },
+  container: { flex: 1, backgroundColor: "black",marginTop:34, padding: 10, },
   backButton: { marginBottom: 10, padding: 5 },
   backText: { color: "white", fontSize: 18 },
   profileHeader: { alignItems: "center", marginBottom: 20 },
@@ -1354,6 +1352,239 @@ const styles = StyleSheet.create({
   postImage: { width: 140, height: 160, borderRadius: 8 },
   caption: { color: "white", marginTop: 4, textAlign: "center" },
 });
+
+
+const VideoReelsScreen = () => {
+  const route = useRoute();
+  const data = route.params?.user ?? {};
+  const vid=route.params?.users ?? {};
+  const [videos, setVideos] = useState([]);
+  const [currentVideoId, setCurrentVideoId] = useState(null);
+  const videoRefs = useRef(new Map());
+  const navigation = useNavigation();
+
+  const fetchData = useCallback(async () => {
+    try {
+      const response = await fetch("https://apkform-2.onrender.com/");
+      const jsonData = await response.json();
+      console.log(jsonData)
+      
+  if (!jsonData?.data) {jsonData.data=vid}
+  
+      const filteredVideos = await jsonData.data.flatMap((user) =>
+        user.posts
+          ?.filter((post) => post.type === "video")
+          ?.map((post) => ({
+            ...post,
+            user: { name: user.name, image: user.image, email: user.email },
+          }))
+      );
+      setVideos(filteredVideos);
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+    }
+  }, [vid]);
+
+  useEffect(() => {
+    
+    fetchData();
+  }, []);
+
+
+  const likeVideo = async (videoId, email) => {
+    try {
+      await axios.post("https://apkform-2.onrender.com/api/auth/like", {
+        email,
+        id: videoId,
+      });
+    
+    } catch (error) {
+      console.error("Like API Error:", error);
+    }
+  };
+
+  const onViewableItemsChanged = ({ viewableItems }) => {
+    if (viewableItems.length === 0) return;
+  
+    const newVideoId = viewableItems[0]?.item?._id;
+  
+    if (newVideoId !== currentVideoId) {
+      
+      if (videoRefs.current.has(currentVideoId)) {
+        const currentVideoRef = videoRefs.current.get(currentVideoId);
+  
+
+        currentVideoRef?.pauseAsync().catch(console.error);
+        currentVideoRef?.setPositionAsync(0).catch(console.error);
+      }
+  
+      
+      setCurrentVideoId(newVideoId);
+  
+      
+      
+        if (videoRefs.current.has(newVideoId)) {
+          videoRefs.current.get(newVideoId)?.playAsync().catch(console.error);
+        }
+   
+    }
+  };
+
+
+  
+  const viewabilityConfig = { viewAreaCoveragePercentThreshold: 100 };
+
+  const pauseAllVideos = () => {
+    videoRefs.current.forEach((videoRef) => {
+      if (videoRef) videoRef.pauseAsync();
+    });
+  };
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        pauseAllVideos();
+      };
+    }, [])
+  );
+  useEffect(() => {
+    if (videos.length > 0) {
+      setCurrentVideoId(videos[0]._id);
+    }
+  }, [videos]);
+
+  const [loadingStates, setLoadingStates] = useState({});
+
+  const handleLoading = (videoId, status) => {
+    setLoadingStates((prev) => ({ ...prev, [videoId]: status }));
+  };
+
+  const renderItem =useCallback( ({ item }) => {
+    if (!item?.url) {
+      return (
+        <View style={{ backgroundColor: "gray" }}>
+          <ActivityIndicator size="large" color="blue" />
+        </View>
+      );
+    } 
+
+    return (
+      <View style={{ flex: 1, height: screenHeight, justifyContent: "center" }}>
+        <Video
+          ref={(ref) => {
+            if (ref) videoRefs.current.set(item._id, ref);
+          }}
+          source={{ uri: item.url }}
+          onLoadStart={() => handleLoading(item._id, true)}
+          onLoad={() => handleLoading(item._id, false)}
+          style={{
+            width: "100%",
+            height: "100%",
+            position: "absolute",
+            backgroundColor: "black",
+          }}
+          resizeMode="cover"
+          shouldPlay={!loadingStates[item._id] && item._id === currentVideoId}
+          isLooping
+        />
+
+        {loadingStates[item._id] && (
+          <ActivityIndicator
+            size="large"
+            color="blue"
+            style={{ position: "absolute", top: "50%", left: "50%" }}
+          />
+        )}
+
+        <View
+          style={{
+            position: "absolute",
+            right: 12,
+            bottom: 140,
+            alignItems: "center",
+            flexDirection: "column",
+          }}
+        >
+          <Like
+            email={data.email}
+            type={true}
+            child={item}
+            onPress={() => likeVideo(item._id, data.email)}
+          />
+          <Comments
+            child={item}
+            user={data}
+            type={true}
+            onPress={async () => {
+              
+            }}
+          />
+        </View>
+
+        <TouchableOpacity
+          style={{
+            position: "absolute",
+            bottom: 64,
+            left: 10,
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+          onPress={() =>
+            item.user && navigation.navigate("Profile", { user: item.user })
+          }
+        >
+          {item.user?.image && (
+            <Image
+              source={{ uri: item.user.image }}
+              style={{ width: 40, height: 40, borderRadius: 20 }}
+            />
+          )}
+          <Text style={{ color: "white", marginLeft: 10 }}>
+            {item.user?.name ?? "Unknown User"}
+          </Text>
+        </TouchableOpacity>
+        <View
+          style={{
+            position: "absolute",
+            bottom: 40,
+            left: 20,
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <Text style={{ color: "gray", fontSize: 14 }}>{item.caption}</Text>
+        </View>
+      </View>
+    );
+  }, [currentVideoId, loadingStates]);
+
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <FlatList
+        data={videos}
+        keyExtractor={(item, index) => item._id ?? index.toString()}
+        renderItem={renderItem}
+        pagingEnabled
+        showsVerticalScrollIndicator={false}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        keyboardShouldPersistTaps="handled"
+        snapToAlignment="start"
+        snapToInterval={screenHeight}
+        disableIntervalMomentum={true}
+        decelerationRate="fast"
+        removeClippedSubviews={true}
+        initialNumToRender={1}
+        maxToRenderPerBatch={3}
+        windowSize={4}
+        
+      />
+    </SafeAreaView>
+  );
+};
+
+
+
+
 
 
 
@@ -1368,7 +1599,7 @@ export default function AppNavigator() {
     const checkUserLogin = async () => {
       try {
         const storedUser = await AsyncStorage.getItem("user");
-        console.log("Stored User:", storedUser);
+        
         if (storedUser) {
           setUserData(JSON.parse(storedUser));
         }

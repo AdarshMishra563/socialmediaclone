@@ -1,24 +1,24 @@
 const mongoose = require("mongoose");
 
-// Comment Schema
+
 const CommentSchema = new mongoose.Schema({
-  username: { type: String, required: true }, // Stores the username of the commenter
-  text: { type: String, required: true }, // Stores the actual comment text
-  createdAt: { type: Date, default: Date.now } // Adds a timestamp for comments
+  username: { type: String, required: true }, 
+  text: { type: String, required: true }, 
+  createdAt: { type: Date, default: Date.now } 
 });
 
-// Post Schema
+
 const PostSchema = new mongoose.Schema({
     type:{type:String,required:true},
-  url: { type: String, required: true }, // Image URL
-  caption: String, // Caption for the post
-  likes: { type: Number, default: 0 }, // Total likes count
-  comments: { type: [CommentSchema], default: [] }, // Array of comments
-  likedby: { type: [String], default: [] }, // Array of emails (users who liked)
-  createdAt: { type: Date, default: Date.now } // Timestamp for post creation
+  url: { type: String, required: true },
+  caption: String, 
+  likes: { type: Number, default: 0 }, 
+  comments: { type: [CommentSchema], default: [] }, 
+  likedby: { type: [String], default: [] }, 
+  createdAt: { type: Date, default: Date.now } 
 });
 
-// User Schema
+
 const UserSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -35,7 +35,7 @@ const UserSchema = new mongoose.Schema({
     required: true
   },
   number: {
-    type: String, // Storing phone number as a string to avoid leading zero issues
+    type: String,
     unique: true,
     required: true
   },
@@ -43,8 +43,8 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  posts: { type: [PostSchema], default: [] } // Array of user's posts
+  posts: { type: [PostSchema], default: [] } 
 });
 
-// Export the model
+
 module.exports = mongoose.model("testingvideo", UserSchema);

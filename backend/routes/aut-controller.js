@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto"); 
 
 const cloudinary = require("cloudinary").v2;
-// Ensure correct path to User model
+
 const multer = require("multer");
 const { promisify } = require("util");
 
@@ -27,7 +27,7 @@ const generateSignature = () => {
 const uploadToCloudinary = promisify(cloudinary.uploader.upload);
 const registerUser = async (req, res) => {
     try {
-      console.log("✅ Incoming Request Body:", req.body);
+      console.log("Incoming Request Body:", req.body);
       
       const { name, email, password, number, image } = req.body;
   
@@ -38,7 +38,7 @@ const registerUser = async (req, res) => {
         });
       }
   
-      // Check if user already exists
+      
       const existingUser = await User.findOne({ email });
       if (existingUser) {
         return res.status(400).json({
@@ -47,33 +47,33 @@ const registerUser = async (req, res) => {
         });
       }
   
-      // ✅ Securely hash the password
+      
       const hashedPassword = password;
   
-      // ✅ Upload base64 image to Cloudinary
       
-    // Generate a secure Cloudinary signature
+      
+    
   
 
   
 
-      // ✅ Create new user
+      
       const newUser = await User.create({
         name,
         email,
         password: hashedPassword,
         number,
-        image // ✅ Store Cloudinary URL
+        image 
       });
   
-      console.log("✅ User Created:", newUser);
+      console.log(" User Created:", newUser);
   
       res.status(201).json({
         success: true,
         message: "Registered successfully",
       });
     } catch (error) {
-      console.error("❌ Registration Error:", error);
+      console.error(" Registration Error:", error);
       res.status(500).json({
         success: false,
         message: "Some error occurred",
@@ -149,9 +149,9 @@ const usercount=async (req, res) => {
         const find=await User.find({_id})
          
         const updated = await User.findOneAndUpdate(
-            { _id }, // Find the user by email
-            { $inc: { wins: 1 } }, // Increment wins by 1
-            { new: true } // Return updated document
+            { _id }, 
+            { $inc: { wins: 1 } }, 
+            { new: true } 
         );
         
 console.log(updated);
@@ -182,7 +182,7 @@ const start=async (req, res) => {
 
 const addPost = async (req, res) => {
   try {
-    console.log("📥 Received Data:", req.body);  // Log incoming request
+    console.log("Received Data:", req.body);  // Log incoming request
 
     const { email, type, url, caption } = req.body;
 
@@ -211,14 +211,14 @@ const addPost = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    console.log("✅ User Updated:", updatedUser);
+    console.log(" User Updated:", updatedUser);
     res.status(200).json({
       success: true,
       message: `${type.charAt(0).toUpperCase() + type.slice(1)} post added successfully`,
       user: updatedUser,
     });
   } catch (error) {
-    console.error("❌ Backend Error:", error);
+    console.error(" Backend Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -240,29 +240,29 @@ const addPost = async (req, res) => {
         return res.status(404).json({ success: false, message: "Post not found!" });
       }
       console.log(post)
-      // 🔹 Ensure likedBy is initialized as an array
+      
       if (!post.likedby) {
         post.likedby = [];
       }
       const isLiked = post.likedby.includes(email);
   
       if (isLiked) {
-        // Unlike the post
+        
         post.likes -= 1;
         post.likedby = post.likedby.filter(email => email !== email);
       } else {
-        // Like the post
+        
         post.likes += 1;
         post.likedby.push(email);
       }
   
-      await user.markModified("posts"); // Mark the posts array as modified
-      await user.save(); // Now save the user
+      await user.markModified("posts"); 
+      await user.save(); 
       
       res.json({ success: true, message: isLiked ? "Post unliked!" : "Post liked!", likes: post.likes });
   
     } catch (error) {
-      console.error("❌ Error:", error);
+      console.error("Error:", error);
       res.status(500).json({ success: false, message: "Internal Server Error" });
     }
   };

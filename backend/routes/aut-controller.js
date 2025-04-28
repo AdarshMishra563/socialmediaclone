@@ -249,7 +249,8 @@ const addPost = async (req, res) => {
       if (isLiked) {
         
         post.likes -= 1;
-        post.likedby = post.likedby.filter(email => email !== email);
+       post.likedby = post.likedby.filter(e => e !== email);
+
       } else {
         
         post.likes += 1;

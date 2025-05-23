@@ -1,10 +1,10 @@
-import React, { useState,useRef, useEffect, useCallback } from "react";
+timport React, { useState,useRef, useEffect, useCallback } from "react";
 import { View, Text,ScrollView,RefreshControl,Button,KeyboardAvoidingView,Modal,StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, FlatList, ImageBackground, Animated, Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent, } from "react-native";
 import axios from "axios";
 
-// reminder //videostream //implementabsoluteviewscrren
+// reminder //videostream
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";

@@ -1,4 +1,4 @@
-timport React, { useState,useRef, useEffect, useCallback } from "react";
+import React, { useState,useRef, useEffect, useCallback } from "react";
 import { View, Text,ScrollView,RefreshControl,Button,KeyboardAvoidingView,Modal,StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, FlatList, ImageBackground, Animated, Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent, } from "react-native";

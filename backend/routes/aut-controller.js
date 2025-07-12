@@ -27,7 +27,7 @@ const generateSignature = () => {
 const uploadToCloudinary = promisify(cloudinary.uploader.upload);
 const registerUser = async (req, res) => {
     try {
-      console.log("Incoming Request Body:", req.body);
+      console.log("Incoming Request  Body:", req.body);
       
       const { name, email, password, number, image } = req.body;
   

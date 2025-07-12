@@ -184,7 +184,7 @@ const addPost = async (req, res) => {
   try {
     console.log("Received Data:", req.body);  // Log incoming request
 
-    const { email, type, url, caption } = req.body;
+    const { email, type, url, caption,thumb } = req.body;
 
     if (!url || !type) {
       return res.status(400).json({ success: false, message: "Post URL and type are required" });
@@ -197,6 +197,7 @@ const addPost = async (req, res) => {
           posts: {
             type,
             url,
+            thumb,
             caption: caption || "",
             likes: 0,
             comments: [],

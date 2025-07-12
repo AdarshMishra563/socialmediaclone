@@ -198,7 +198,7 @@ const addPost = async (req, res) => {
             type,
             url,
             thumb,
-            caption: the caption || "",
+            caption:  caption || "",
             likes: 0,
             comments: [],
             createdAt: new Date(),

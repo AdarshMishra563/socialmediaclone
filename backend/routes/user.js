@@ -11,7 +11,7 @@ const CommentSchema = new mongoose.Schema({
 const PostSchema = new mongoose.Schema({
     type:{type:String,required:true},
   url: { type: String, required: true },
-  thumb:{type:String}
+  thumb:{type:String},
   caption: String, 
   likes: { type: Number, default: 0 }, 
   comments: { type: [CommentSchema], default: [] }, 
